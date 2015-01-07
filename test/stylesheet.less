@@ -1,0 +1,35 @@
+@a: 1px;
+@b: bar;
+
+
+.mx {
+	c: d;
+}
+
+.mx2() {
+	e: f;
+}
+
+.foo {
+	padding: @a + 1;
+
+	.bar1 {
+		a: b;
+	}
+
+	.bar2& {
+		@a: 4px;
+		padding: @a + 1;
+	}
+
+	&.bar3, &.bar4 {
+		a: b;
+	}
+
+	@{b} {
+		a: b;
+	}
+
+	.mx;
+	.mx2;
+}

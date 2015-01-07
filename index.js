@@ -10,15 +10,21 @@
 var RepresentationNode = require('./lib/representation-node');
 var SourceRepresentationNode = require('./lib/source-representation-node');
 var references = require('./lib/references');
+var selectors = require('./lib/selectors');
+var completions = require('./lib/completions');
 
 module.exports = function(tree) {
 	var source = new SourceRepresentationNode(tree.scope.parent.ref);
 	var result = new RepresentationNode(tree);
-
+	var options = {
+		references: references(source, result)
+	};
 
 	return {
 		source: source.toJSON(),
 		result: result.toJSON(),
-		references: references(source, result)
+		references: options.references,
+		selectors: selectors(source, result, options),
+		completions: completions(source, result, options)
 	};
 };
