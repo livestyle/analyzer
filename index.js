@@ -12,6 +12,7 @@ var SourceRepresentationNode = require('./lib/source-representation-node');
 var references = require('./lib/references');
 var selectors = require('./lib/selectors');
 var completions = require('./lib/completions');
+var mixinCall = require('./lib/mixin-call');
 
 module.exports = function(tree) {
 	var source = new SourceRepresentationNode(tree.scope.parent.ref);
@@ -25,6 +26,7 @@ module.exports = function(tree) {
 		result: result.toJSON(),
 		references: options.references,
 		selectors: selectors(source, result, options),
-		completions: completions(source, result, options)
+		completions: completions(source, result, options),
+		mixinCall: mixinCall(source, result, options)
 	};
 };

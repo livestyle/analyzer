@@ -18,6 +18,7 @@ describe('LiveStyle Analyzer', function() {
 			// console.log('References', result.references);
 			console.log('Selectors', result.selectors);
 			console.log('Completions', result.completions);
+			console.log('Mixins', result.mixinCall);
 			done();
 		});
 	});
