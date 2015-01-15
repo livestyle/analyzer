@@ -15,6 +15,18 @@ var completions = require('./lib/completions');
 var mixinCall = require('./lib/mixin-call');
 var variableSuggest = require('./lib/variable-suggest');
 
+function toJSON() {
+	var json = {};
+	Object.keys(this).forEach(function(prop) {
+		var value = this[prop];
+		if (value && 'toJSON' in value) {
+			value = value.toJSON();
+		}
+		json[prop] = value;
+	}, this);
+	return json;
+}
+
 module.exports = function(tree) {
 	var source = new SourceRepresentationNode(tree.scope.parent.ref);
 	var result = new RepresentationNode(tree);
@@ -22,13 +34,19 @@ module.exports = function(tree) {
 		references: references(source, result)
 	};
 
-	return {
-		source: source.toJSON(),
-		result: result.toJSON(),
+	var out = {
+		source: source,
+		result: result,
 		references: options.references,
 		selectors: selectors(source, result, options),
 		completions: completions(source, result, options),
 		mixinCall: mixinCall(source, result, options),
 		variableSuggest: variableSuggest(source, result, options)
 	};
+
+	Object.defineProperty(out, 'toJSON', {
+		value: toJSON
+	});
+	
+	return out;
 };
