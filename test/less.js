@@ -11,7 +11,19 @@ describe('LESS Analyzer', function() {
 	var analysis, result, source;
 
 	// transformation is synchronous: no external dependencies
-	livestyle.resolve(stylesheet, {syntax: 'less'}, function(err, tree) {
+	var options = {
+		uri: path.join(__dirname, 'stylesheet.less'),
+		syntax: 'less',
+		loader: function(deps, callback) {
+			callback(deps.map(function(dep) {
+				return {
+					uri: dep.uri,
+					content: fs.readFileSync(dep.uri, 'utf8')
+				};
+			}));
+		}
+	};
+	livestyle.resolve(stylesheet, options, function(err, tree) {
 		result = tree;
 		source = tree.scope.parent.ref;
 		analysis = analyze(tree);
@@ -88,11 +100,11 @@ describe('LESS Analyzer', function() {
 		};
 
 		var c = compl('.foo');
-		assert.deepEqual(c.variables, ['@arguments', '@baz', '@a', '@a2', '@b', '@c1', '@c1_1', '@c2', '@c3']);
+		assert.deepEqual(c.variables, ['@baz', '@ext_var', '@ext_color', '@a', '@a2', '@b', '@c1', '@c1_1', '@c2', '@c3']);
 		assert.deepEqual(c.mixins, ['.bar1', '.bar3', '.bar4', '.mx', '.mx(@a)', '.mx.inner', '.mx2', '.foo', '.foo.bar1', '.foo.bar3', '.foo.bar4', '.color', '.props']);
 
 		c = compl('.color');
-		assert.deepEqual(c.variables, ['@a', '@a2', '@b', '@c1', '@c1_1', '@c2', '@c3']);
+		assert.deepEqual(c.variables, ['@ext_var', '@ext_color', '@a', '@a2', '@b', '@c1', '@c1_1', '@c2', '@c3']);
 		assert.deepEqual(c.mixins, ['.mx', '.mx(@a)', '.mx.inner', '.mx2', '.foo', '.foo.bar1', '.foo.bar3', '.foo.bar4', '.color', '.props']);
 	});
 
@@ -135,9 +147,9 @@ describe('LESS Analyzer', function() {
 			}
 		};
 
-		assert.deepEqual(suggest('.props', 'padding'), ['@a: 1px', '@a2: 10px - 9']);
+		assert.deepEqual(suggest('.props', 'padding'), ['@ext_var: 1px', '@a: 1px', '@a2: 10px - 9']);
 		assert.deepEqual(suggest('.color', 'v1'), undefined); // no completions
-		assert.deepEqual(suggest('.color', 'v2'), ['@c1: #fc0', '@c1_1: #fb0']);
+		assert.deepEqual(suggest('.color', 'v2'), ['@ext_color: #fc0', '@c1: #fc0', '@c1_1: #fb0']);
 		assert.deepEqual(suggest('.color', 'v3'), ['@c3: darken(#fc0, 0.1)']);
 	});
 });
