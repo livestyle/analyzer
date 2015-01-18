@@ -100,13 +100,12 @@ describe('LESS Analyzer', function() {
 		};
 
 		var c = compl('.foo');
-		assert.deepEqual(c.variables, ['@baz', '@ext_var', '@ext_color', '@a', '@a2', '@b', '@c1', '@c1_1', '@c2', '@c3']);
-		// TODO ext-mixin is not available!
-		assert.deepEqual(c.mixins, ['.bar1', '.bar3', '.bar4', '.mx', '.mx(@a)', '.mx.inner', '.mx2', '.foo', '.foo.bar1', '.foo.bar3', '.foo.bar4', '.color', '.props']);
+		assert.deepEqual(c.variables, ['@baz', '@ext_var', '@ext_color', '@a', '@a2', '@b', '@c1', '@c1_1', '@c2', '@c3']);		// TODO ext-mixin is not available!
+		assert.deepEqual(c.mixins, ['.bar1', '.bar3', '.bar4', '.mx', '.mx(@a)', '.mx.inner', '.mx2', '.foo', '.foo.bar1', '.foo.bar3', '.foo.bar4', '.color', '.props', '.ext-mixin']);
 
 		c = compl('.color');
 		assert.deepEqual(c.variables, ['@ext_var', '@ext_color', '@a', '@a2', '@b', '@c1', '@c1_1', '@c2', '@c3']);
-		assert.deepEqual(c.mixins, ['.mx', '.mx(@a)', '.mx.inner', '.mx2', '.foo', '.foo.bar1', '.foo.bar3', '.foo.bar4', '.color', '.props']);
+		assert.deepEqual(c.mixins, ['.mx', '.mx(@a)', '.mx.inner', '.mx2', '.foo', '.foo.bar1', '.foo.bar3', '.foo.bar4', '.color', '.props', '.ext-mixin']);
 	});
 
 	it('mixin call', function() {
