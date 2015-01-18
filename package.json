@@ -9,7 +9,7 @@
   "author": "Sergey Chikuyonok <serge.che@gmail.com>",
   "license": "MIT",
   "devDependencies": {
-    "emmet-livestyle": "^0.9.9",
+    "emmet-livestyle": "^0.9.10",
     "mocha": "^2.1.0"
   },
   "dependencies": {
