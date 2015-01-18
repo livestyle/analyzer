@@ -1,0 +1,6 @@
+$ext_var: 1px;
+$ext_color: #fc0;
+
+@mixin ext-mixin {
+	inner-foo: inner-bar;
+}

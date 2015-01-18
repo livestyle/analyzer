@@ -6,15 +6,19 @@ var livestyle = require('emmet-livestyle');
 
 livestyle.logger.silent(true);
 
-describe('LESS Analyzer', function() {
-	var stylesheet = fs.readFileSync(path.join(__dirname, 'stylesheet.less'), 'utf8');
+describe('SCSS analyzer', function() {
+	var stylesheet = fs.readFileSync(path.join(__dirname, 'stylesheet.scss'), 'utf8');
 	var analysis, result, source;
 
 	// transformation is synchronous: no external dependencies
 	var options = {
-		uri: path.join(__dirname, 'stylesheet.less'),
-		syntax: 'less',
+		uri: path.join(__dirname, 'stylesheet.scss'),
+		syntax: 'scss',
 		loader: function(deps, callback) {
+			deps = deps.filter(function(dep) {
+				return !/\/_\w+\.\w+$/.test(dep.uri);
+			});
+			
 			callback(deps.map(function(dep) {
 				return {
 					uri: dep.uri,
@@ -33,7 +37,7 @@ describe('LESS Analyzer', function() {
 		return Array.prototype.slice.call(args, 0).reduce(function(prev, cur) {
 			return prev.get(cur);
 		}, source);
-	};
+	}
 
 	it('references', function() {
 		// source-to-result node references: shows how source node
@@ -57,12 +61,11 @@ describe('LESS Analyzer', function() {
 			}
 		};
 
-		assert.equal(ref('.mx'), '.mx');
-		assert.equal(ref('.mx2()'), undefined); // mixin-only sections are not outputted
+		assert.equal(ref('@mixin mx($a: 2)'), undefined); // mixins are not outputted
 		assert.equal(ref('.foo', 'padding'), 'padding: 2px');
-		assert.equal(ref('.foo', '.bar2&'), '.bar2.foo');
-		assert.equal(ref('.foo', '@{b}'), '.foo bar');
-		assert.equal(ref('.foo', '.mx'), undefined); // mixin calls are not outputted
+		assert.equal(ref('.foo', '&.bar3, &.bar4'), '.foo.bar3, .foo.bar4');
+		assert.equal(ref('.foo', '#{$b}'), '.foo bar');
+		assert.equal(ref('.foo', '@include mx'), undefined); // mixin calls are not outputted
 	});
 
 	it('selectors', function() {
@@ -72,13 +75,11 @@ describe('LESS Analyzer', function() {
 			return rsource ? analysis.selectors[rsource.id] : undefined;
 		};
 
-		assert.equal(sel('.mx'), '.mx');
-		assert.equal(sel('.mx2()'), undefined);
+		assert.equal(sel('@mixin mx($a: 2)'), undefined);
 		assert.equal(sel('.foo'), '.foo');
 		assert.equal(sel('.foo', '.bar1'), '.foo .bar1');
-		assert.equal(sel('.foo', '.bar2&'), '.bar2.foo');
 		assert.equal(sel('.foo', '&.bar3, &.bar4'), '.foo.bar3, .foo.bar4');
-		assert.equal(sel('.foo', '@{b}'), '.foo bar');
+		assert.equal(sel('.foo', '#{$b}'), '.foo bar');
 	});
 
 	it('completions', function() {
@@ -100,13 +101,12 @@ describe('LESS Analyzer', function() {
 		};
 
 		var c = compl('.foo');
-		assert.deepEqual(c.variables, ['@baz', '@ext_var', '@ext_color', '@a', '@a2', '@b', '@c1', '@c1_1', '@c2', '@c3']);
-		// TODO ext-mixin is not available!
-		assert.deepEqual(c.mixins, ['.bar1', '.bar3', '.bar4', '.mx', '.mx(@a)', '.mx.inner', '.mx2', '.foo', '.foo.bar1', '.foo.bar3', '.foo.bar4', '.color', '.props']);
+		assert.deepEqual(c.variables, ['$ext_var', '$ext_color', '$a', '$a2', '$b', '$c1', '$c1_1', '$c2', '$c3', '$baz']);
+		assert.deepEqual(c.mixins, ['ext-mixin', 'mx($a)', 'mx2']);
 
 		c = compl('.color');
-		assert.deepEqual(c.variables, ['@ext_var', '@ext_color', '@a', '@a2', '@b', '@c1', '@c1_1', '@c2', '@c3']);
-		assert.deepEqual(c.mixins, ['.mx', '.mx(@a)', '.mx.inner', '.mx2', '.foo', '.foo.bar1', '.foo.bar3', '.foo.bar4', '.color', '.props']);
+		assert.deepEqual(c.variables, ['$ext_var', '$ext_color', '$a', '$a2', '$b', '$c1', '$c1_1', '$c2', '$c3', '$baz']);
+		assert.deepEqual(c.mixins, ['ext-mixin', 'mx($a)', 'mx2']);
 	});
 
 	it('mixin call', function() {
@@ -129,12 +129,11 @@ describe('LESS Analyzer', function() {
 			return mixin.output.map(stringify).join('');
 		};
 
-		var mixins = getMixins('.foo', '.mx');
-		assert.equal(mixins.length, 2);
-		assert.equal(mixins[0].name, '.mx');
-		assert.deepEqual(mixins[1].arguments, [['@a', '2']]);
-		assert.equal(output(mixins[0]), 'c:d;');
-		assert.equal(output(mixins[1]), 'g:2;.foo .inner{h:3;}');
+		var mixins = getMixins('.foo', '@include');
+		assert.equal(mixins.length, 1);
+		assert.equal(mixins[0].name, 'mx');
+		assert.deepEqual(mixins[0].arguments, [['$a', '2']]);
+		assert.equal(output(mixins[0]), 'g:2;.foo .inner{h:3;}');
 	});
 
 	it('variable suggest', function() {
@@ -148,9 +147,9 @@ describe('LESS Analyzer', function() {
 			}
 		};
 
-		assert.deepEqual(suggest('.props', 'padding'), ['@ext_var: 1px', '@a: 1px', '@a2: 10px - 9']);
+		assert.deepEqual(suggest('.props', 'padding'), ['$ext_var: 1px', '$a: 1px', '$a2: 10px - 9']);
 		assert.deepEqual(suggest('.color', 'v1'), undefined); // no completions
-		assert.deepEqual(suggest('.color', 'v2'), ['@ext_color: #fc0', '@c1: #fc0', '@c1_1: #fb0']);
-		assert.deepEqual(suggest('.color', 'v3'), ['@c3: darken(#fc0, 0.1)']);
+		assert.deepEqual(suggest('.color', 'v2'), ['$ext_color: #fc0', '$c1: #fc0', '$c1_1: #fb0']);
+		assert.deepEqual(suggest('.color', 'v3'), ['$c3: darken(#fc0, 0.1)']);
 	});
 });
