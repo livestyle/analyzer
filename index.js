@@ -19,7 +19,7 @@ function toJSON() {
 	var json = {};
 	Object.keys(this).forEach(function(prop) {
 		var value = this[prop];
-		if (value && 'toJSON' in value) {
+		if (typeof value === 'object' && 'toJSON' in value) {
 			value = value.toJSON();
 		}
 		json[prop] = value;
