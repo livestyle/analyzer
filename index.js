@@ -38,6 +38,7 @@ module.exports = function(tree) {
 	var out = {
 		source: source,
 		result: result,
+		syntax: tree.scope.syntax,
 		references: options.references,
 		selectors: selectors(source, result, options),
 		completions: completions(source, result, options),

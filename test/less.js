@@ -8,7 +8,7 @@ livestyle.logger.silent(true);
 
 describe('LESS Analyzer', function() {
 	var stylesheet = fs.readFileSync(path.join(__dirname, 'stylesheet.less'), 'utf8');
-	var analysis, result, source;
+	var analysis, source;
 
 	// transformation is synchronous: no external dependencies
 	var options = {
@@ -24,7 +24,6 @@ describe('LESS Analyzer', function() {
 		}
 	};
 	livestyle.resolve(stylesheet, options, function(err, tree) {
-		result = tree;
 		source = tree.scope.parent.ref;
 		analysis = analyze(tree);
 	});

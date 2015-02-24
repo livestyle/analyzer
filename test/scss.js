@@ -8,7 +8,7 @@ livestyle.logger.silent(true);
 
 describe('SCSS analyzer', function() {
 	var stylesheet = fs.readFileSync(path.join(__dirname, 'stylesheet.scss'), 'utf8');
-	var analysis, result, source;
+	var analysis, source;
 
 	// transformation is synchronous: no external dependencies
 	var options = {
@@ -28,7 +28,6 @@ describe('SCSS analyzer', function() {
 		}
 	};
 	livestyle.resolve(stylesheet, options, function(err, tree) {
-		result = tree;
 		source = tree.scope.parent.ref;
 		analysis = analyze(tree);
 	});
