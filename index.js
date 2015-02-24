@@ -4,7 +4,7 @@
  * @param  {ResolvedNode} tree Resolved tree to analyze. Should 
  * contain reference to source node which is actually will be 
  * analyzed.
- * @return {Object}       JSON with meta info about `source` tree
+ * @return {Object} JSON with meta info about `source` tree
  */
 
 var RepresentationNode = require('./lib/representation-node');
@@ -14,6 +14,7 @@ var selectors = require('./lib/selectors');
 var completions = require('./lib/completions');
 var mixinCall = require('./lib/mixin-call');
 var variableSuggest = require('./lib/variable-suggest');
+var computedValues = require('./lib/computed-values');
 
 function toJSON() {
 	var json = {};
@@ -41,7 +42,8 @@ module.exports = function(tree) {
 		selectors: selectors(source, result, options),
 		completions: completions(source, result, options),
 		mixinCall: mixinCall(source, result, options),
-		variableSuggest: variableSuggest(source, result, options)
+		variableSuggest: variableSuggest(source, result, options),
+		computedValues: computedValues(source, result, options)
 	};
 
 	Object.defineProperty(out, 'toJSON', {

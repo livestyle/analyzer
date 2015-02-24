@@ -152,4 +152,23 @@ describe('LESS Analyzer', function() {
 		assert.deepEqual(suggest('.color', 'v2'), ['@ext_color: #fc0', '@c1: #fc0', '@c1_1: #fb0']);
 		assert.deepEqual(suggest('.color', 'v3'), ['@c3: darken(#fc0, 0.1)']);
 	});
+
+	it('computed values', function() {
+		var value = function() {
+			var rsource = analysis.source.getByRef(getSource(arguments));
+			return rsource && analysis.computedValues[rsource.id];
+		};
+
+		assert.equal(value('@a'), '1px');
+		assert.equal(value('@a2'), '1px');
+		assert.equal(value('@b'), 'bar');
+		assert.equal(value('@c1'), '#ffcc00');
+		assert.equal(value('@c1_1'), '#ffbb00');
+		assert.equal(value('@c2'), '#aaaaaa');
+		assert.equal(value('@c3'), '#cca300');
+
+		assert.equal(value('.mx', 'c'), 'd');
+		assert.equal(value('.foo', 'padding'), '2px');
+		assert.equal(value('.foo', '.bar2&', 'padding'), '5px');
+	});
 });
