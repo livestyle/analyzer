@@ -167,5 +167,7 @@ describe('SCSS analyzer', function() {
 		assert.equal(value('$c3'), '#cca300');
 
 		assert.equal(value('.foo', 'padding'), '2px');
+		assert.equal(value('bar2', 'a'), '3');
+		assert.equal(value('bar2', 'b'), '3');
 	});
 });

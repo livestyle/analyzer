@@ -48,3 +48,16 @@ $c3: darken(#fc0, 0.1);
 .props {
 	padding: 1px;
 }
+
+@function foo() {
+  @return 1 + 2;
+}
+
+@function plus($var1, $var2) {
+  @return $var1 + $var2;
+}
+
+bar2 {
+  a: foo();
+  b: plus(1, 2);
+}
