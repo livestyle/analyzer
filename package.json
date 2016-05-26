@@ -1,10 +1,10 @@
 {
   "name": "livestyle-analyzer",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Analyzes incoming preprocessor stylesheet and outputs info about how stylesheet assets will look in CSS",
   "main": "index.js",
   "scripts": {
-    "test": "./node_modules/.bin/mocha --reporter spec"
+    "test": "mocha --reporter spec"
   },
   "author": "Sergey Chikuyonok <serge.che@gmail.com>",
   "license": "MIT",
@@ -13,6 +13,6 @@
     "mocha": "^2.1.0"
   },
   "dependencies": {
-    "livestyle-css-expression": "git+https://github.com/livestyle/css-expression.git"
+    "livestyle-css-expression": "livestyle/css-expression"
   }
 }
