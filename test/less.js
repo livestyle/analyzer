@@ -137,6 +137,11 @@ describe('LESS Analyzer', function() {
 		assert.deepEqual(mixins[1].arguments, [['@aa', '2']]);
 		assert.equal(output(mixins[0]), 'c:d;');
 		assert.equal(output(mixins[1]), 'g:2;.foo .inner{h:3;}');
+
+		var refNode = mixins[0].origin.toJSON();
+		assert(refNode);
+		assert.equal(refNode.name, '.mx');
+		assert.equal(refNode.type, 'section');
 	});
 
 	it('variable suggest', function() {

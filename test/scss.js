@@ -18,7 +18,7 @@ describe('SCSS analyzer', function() {
 			deps = deps.filter(function(dep) {
 				return !/\/_\w+\.\w+$/.test(dep.uri);
 			});
-			
+
 			callback(deps.map(function(dep) {
 				return {
 					uri: dep.uri,
@@ -133,6 +133,11 @@ describe('SCSS analyzer', function() {
 		assert.equal(mixins[0].name, 'mx');
 		assert.deepEqual(mixins[0].arguments, [['$a', '2']]);
 		assert.equal(output(mixins[0]), 'g:2;.foo .inner{h:3;}');
+
+		var refNode = mixins[0].origin.toJSON(true);
+		assert(refNode);
+		assert.equal(refNode.name, '@mixin mx($a: 2)');
+		assert.equal(refNode.type, 'section');
 	});
 
 	it('variable suggest', function() {
