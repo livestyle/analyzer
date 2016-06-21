@@ -40,7 +40,7 @@ module.exports = function(tree) {
 		source: source,
 		result: result,
 		syntax: tree.scope.syntax,
-		references: options.references,
+		references: options.references.mapping,
 		selectors: selectors(source, result, options),
 		completions: completions(source, result, options),
 		mixinCall: mixinCall(source, result, options),

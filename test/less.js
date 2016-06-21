@@ -1,18 +1,21 @@
+'use strict';
+
 var fs = require('fs');
 var path = require('path');
 var assert = require('assert');
-var analyze = require('../');
+var analyzer = require('../');
 var livestyle = require('emmet-livestyle');
 
 livestyle.logger.silent(true);
 
-describe('LESS Analyzer', function() {
-	var stylesheet = fs.readFileSync(path.join(__dirname, 'stylesheet.less'), 'utf8');
-	var analysis, source;
+function analyze(file) {
+	var absFile = path.resolve(__dirname, file);
+	var stylesheet = fs.readFileSync(absFile, 'utf8');
+	var analysis;
 
 	// transformation is synchronous: no external dependencies
 	var options = {
-		uri: path.join(__dirname, 'stylesheet.less'),
+		uri: absFile,
 		syntax: 'less',
 		loader: function(deps, callback) {
 			callback(deps.map(function(dep) {
@@ -24,21 +27,29 @@ describe('LESS Analyzer', function() {
 		}
 	};
 	livestyle.resolve(stylesheet, options, function(err, tree) {
-		source = tree.scope.parent.ref;
-		analysis = analyze(tree);
+		analysis = analyzer(tree);
+		var rawSource = tree.scope.parent.ref;
+
+		analysis.rawSource = rawSource;
+		analysis.getRefSource = args => {
+			return Array.from(args).reduce((node, sel) => node.get(sel), rawSource);
+		};
+
+		analysis.getSource = args => {
+			return analysis.source.getByRef(analysis.getRefSource(args));
+		};
 	});
 
-	var getSource = function(args) {
-		return Array.prototype.slice.call(args, 0).reduce(function(prev, cur) {
-			return prev.get(cur);
-		}, source);
-	};
+	return analysis;
+}
 
+describe('LESS Analyzer', function() {
 	it('references', function() {
 		// source-to-result node references: shows how source node
 		// is represented (resolved) in result CSS
+		var analysis = analyze('stylesheet.less');
 		var ref = function(node) {
-			var rsource = analysis.source.getByRef(getSource(arguments));
+			var rsource = analysis.getSource(arguments);
 			if (rsource) {
 				var refs = analysis.references[rsource.id];
 				if (refs) {
@@ -66,8 +77,9 @@ describe('LESS Analyzer', function() {
 
 	it('selectors', function() {
 		// shows resolved selectors for source nodes
+		var analysis = analyze('stylesheet.less');
 		var sel = function(node) {
-			var rsource = analysis.source.getByRef(getSource(arguments));
+			var rsource = analysis.getSource(arguments);
 			return rsource ? analysis.selectors[rsource.id] : undefined;
 		};
 
@@ -82,8 +94,9 @@ describe('LESS Analyzer', function() {
 
 	it('completions', function() {
 		// context completions with variables and mixins
+		var analysis = analyze('stylesheet.less');
 		var compl = function() {
-			var rsource = analysis.source.getByRef(getSource(arguments));
+			var rsource = analysis.getSource(arguments);
 			var completions = rsource && analysis.completions[rsource.id];
 			if (completions) {
 				return {
@@ -99,21 +112,22 @@ describe('LESS Analyzer', function() {
 		};
 
 		var c = compl('.foo');
-		assert.deepEqual(c.variables, ['@baz', '@ext_var', '@ext_color', '@a', '@a2', '@b', '@c1', '@c1_1', '@c2', '@c3']);		// TODO ext-mixin is not available!
+		assert.deepEqual(c.variables, ['@baz', '@a', '@a2', '@b', '@c1', '@c1_1', '@c2', '@c3', '@ext_var', '@ext_color']);		// TODO ext-mixin is not available!
 		assert.deepEqual(c.mixins, ['.bar1', '.bar3', '.bar4', '.mx', '.mx(@aa)', '.mx.inner', '.mx2', '.foo', '.foo.bar1', '.foo.bar3', '.foo.bar4', '.color', '.props', '.ext-mixin']);
 
 		c = compl('.color');
-		assert.deepEqual(c.variables, ['@ext_var', '@ext_color', '@a', '@a2', '@b', '@c1', '@c1_1', '@c2', '@c3']);
+		assert.deepEqual(c.variables, ['@a', '@a2', '@b', '@c1', '@c1_1', '@c2', '@c3', '@ext_var', '@ext_color']);
 		assert.deepEqual(c.mixins, ['.mx', '.mx(@aa)', '.mx.inner', '.mx2', '.foo', '.foo.bar1', '.foo.bar3', '.foo.bar4', '.color', '.props', '.ext-mixin']);
 
 		c = compl('.mx(@aa: 2)');
-		assert.deepEqual(c.variables, ['@ext_var', '@ext_color', '@a', '@a2', '@b', '@c1', '@c1_1', '@c2', '@c3', '@aa']);
+		assert.deepEqual(c.variables, ['@a', '@a2', '@b', '@c1', '@c1_1', '@c2', '@c3', '@ext_var', '@ext_color', '@aa']);
 		assert.deepEqual(c.mixins, ['.mx', '.mx(@aa)', '.mx.inner', '.mx2', '.foo', '.foo.bar1', '.foo.bar3', '.foo.bar4', '.color', '.props', '.ext-mixin']);
 	});
 
 	it('mixin call', function() {
+		var analysis = analyze('stylesheet.less');
 		var getMixins = function() {
-			var rsource = analysis.source.getByRef(getSource(arguments));
+			var rsource = analysis.getSource(arguments);
 			return rsource && analysis.mixinCall[rsource.id];
 		};
 
@@ -145,8 +159,9 @@ describe('LESS Analyzer', function() {
 	});
 
 	it('variable suggest', function() {
+		var analysis = analyze('stylesheet.less');
 		var suggest = function() {
-			var rsource = analysis.source.getByRef(getSource(arguments));
+			var rsource = analysis.getSource(arguments);
 			var suggestions = rsource && analysis.variableSuggest[rsource.id];
 			if (suggestions) {
 				return suggestions.map(function(s) {
@@ -155,15 +170,16 @@ describe('LESS Analyzer', function() {
 			}
 		};
 
-		assert.deepEqual(suggest('.props', 'padding'), ['@ext_var: 1px', '@a: 1px', '@a2: 10px - 9']);
+		assert.deepEqual(suggest('.props', 'padding'), ['@a: 1px', '@a2: 10px - 9', '@ext_var: 1px']);
 		assert.deepEqual(suggest('.color', 'v1'), undefined); // no completions
-		assert.deepEqual(suggest('.color', 'v2'), ['@ext_color: #fc0', '@c1: #fc0', '@c1_1: #fb0']);
+		assert.deepEqual(suggest('.color', 'v2'), ['@c1: #fc0', '@ext_color: #fc0', '@c1_1: #fb0']);
 		assert.deepEqual(suggest('.color', 'v3'), ['@c3: darken(#fc0, 0.1)']);
 	});
 
 	it('computed values', function() {
+		var analysis = analyze('stylesheet.less');
 		var value = function() {
-			var rsource = analysis.source.getByRef(getSource(arguments));
+			var rsource = analysis.getSource(arguments);
 			return rsource && analysis.computedValues[rsource.id];
 		};
 
@@ -178,5 +194,49 @@ describe('LESS Analyzer', function() {
 		assert.equal(value('.mx', 'c'), 'd');
 		assert.equal(value('.foo', 'padding'), '2px');
 		assert.equal(value('.foo', '.bar2&', 'padding'), '5px');
+	});
+
+	it('completions & computed vars for empty result nodes', () => {
+		let analysis = analyze('assets/completions.less');
+		let completions = function() {
+			var rsource = analysis.getSource(arguments);
+			var cmpl = rsource && analysis.completions[rsource.id];
+			if (cmpl) {
+				return {
+					variables: cmpl.variables,
+					mixins: cmpl.mixins.map(function(mixin) {
+						var args = mixin.arguments.map(a => a[0]);
+						return mixin.name + (args.length ? '(' + args.join(', ') + ')' : '');
+					})
+				};
+			}
+		};
+
+		let vars = function() {
+			return completions.apply(null, arguments).variables;
+		};
+
+		let value = function() {
+			var rsource = analysis.getSource(arguments);
+			return rsource && analysis.computedValues[rsource.id];
+		};
+
+		assert.deepEqual(vars(), {
+			'@v1': {raw: '1px', computed: '1px'}
+		});
+		assert.deepEqual(vars('a'), {
+			'@v1': {raw: '1px', computed: '1px'},
+			'@v2': {raw: '2px', 'computed': '2px'},
+			'@v3': {raw: '@v1 + @v2', computed: '3px'}
+		});
+		assert.deepEqual(vars('a', 'b'), {
+			'@v1': {raw: '100px', computed: '100px'},
+			'@v2': {raw: '2px', computed: '2px'},
+			'@v3': {raw: '@v1 + @v2', computed: '102px'}
+		});
+
+		assert.equal(value('a', '@v2'), '2px');
+		assert.equal(value('a', '@v3'), '3px');
+		assert.equal(value('a', 'b', 'c', 'padding'), '102px');
 	});
 });
