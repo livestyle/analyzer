@@ -239,4 +239,16 @@ describe('LESS Analyzer', function() {
 		assert.equal(value('a', '@v3'), '3px');
 		assert.equal(value('a', 'b', 'c', 'padding'), '102px');
 	});
+
+	it('magic divide', () => {
+		let analysis = analyze('assets/magic.less');
+
+		let value = function() {
+			var rsource = analysis.getSource(arguments);
+			return rsource && analysis.computedValues[rsource.id];
+		};
+
+		assert.equal(value('body', 'font'), '14px/20px');
+		assert.equal(value('body', 'foo'), '0.7px');
+	});
 });
