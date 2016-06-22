@@ -1,6 +1,6 @@
 {
   "name": "livestyle-analyzer",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Analyzes incoming preprocessor stylesheet and outputs info about how stylesheet assets will look in CSS",
   "main": "index.js",
   "scripts": {
@@ -13,6 +13,6 @@
     "mocha": "^2.1.0"
   },
   "dependencies": {
-    "livestyle-css-expression": "livestyle/css-expression"
+    "livestyle-css-expression": "^1.0.0"
   }
 }
