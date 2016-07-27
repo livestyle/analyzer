@@ -1,6 +1,6 @@
 {
   "name": "livestyle-analyzer",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Analyzes incoming preprocessor stylesheet and outputs info about how stylesheet assets will look in CSS",
   "main": "index.js",
   "scripts": {
